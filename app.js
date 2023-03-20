@@ -14,7 +14,7 @@ let database = null;
 const initializeDbAndServer = async () => {
   try {
     database = await open({
-      fileName: databasePath,
+      filename: databasePath,
       driver: sqlite3.Database,
     });
     app.listen(3000, () =>
@@ -30,27 +30,27 @@ initializeDbAndServer();
 
 const convertPlayerDbObjectToResponseObject = (dbObject) => {
   return {
-    playerId: player_id,
-    PlayerName: player_name,
+    playerId: dbObject.player_id,
+    PlayerName: dbObject.player_name,
   };
 };
 
 const convertMatchDbObjectToResponseObject = (dbObject) => {
   return {
-    matchId: match_id,
-    match: match,
-    year: year,
+    matchId: dbObject.match_id,
+    match: dbObject.match,
+    year: dbObject.year,
   };
 };
 
 const convertPlayerMatchDbObjectToResponseObject = (dbObject) => {
   return {
-    playerMatchId: player_match_id,
-    playerId: player_id,
-    matchId: match_id,
-    score: score,
-    fours: fours,
-    sixes: sixes,
+    playerMatchId: dbObject.player_match_id,
+    playerId: dbObject.player_id,
+    matchId: dbObject.match_id,
+    score: dbObject.score,
+    fours: dbObject.fours,
+    sixes: dbObject.sixes,
   };
 };
 
@@ -63,7 +63,11 @@ app.get("/players/", async (request, response) => {
         FROM
             player_details;`;
   const playersArray = await database.all(getPlayersQuery);
-  response.send(convertPlayerDbObjectToResponseObject(playersArray));
+  response.send(
+    playersArray.map((eachPlayer) =>
+      convertPlayerDbObjectToResponseObject(eachPlayer)
+    )
+  );
 });
 
 // Returns a specific player based on the player ID
@@ -93,9 +97,9 @@ app.put("players/:playerId", async (request, response) => {
         player_name = ${playerName}
     WHERE 
         player_id = ${playerId};`;
+  await database.run(updatePlayerQuery);
+  response.send("Player Details Updated");
 });
-await database.run(updatePlayerQuery);
-response.send("Player Details Updated");
 
 // Returns the match details of a specific match
 
